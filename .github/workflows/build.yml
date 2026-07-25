@@ -1,19 +1,10 @@
+```yaml
 name: Build Windows Installer
-
-# This workflow builds the BeamMP Host MSI installer on a real Windows machine
-# in GitHub's cloud (free for public repos). You don't need any tools installed
-# locally - GitHub provides the Windows runner with MSVC, Rust, and everything
-# else pre-installed.
-#
-# After the build finishes (about 10-15 minutes), you can download the MSI
-# installer from the workflow run page.
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: # allows manual trigger from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
@@ -38,28 +29,68 @@ jobs:
           workspaces: src-tauri -> target
 
       - name: Install JS dependencies
-        run: bun install --frozen-lockfile=false
-
-      - name: Build Tauri app
-        run: bun run tauri:build
-        env:
-          # The windows-latest runner has MSVC Build Tools pre-installed,
-          # so link.exe will be available without any extra setup.
-          TAURI_BUILD: "1"
-
-      - name: Locate built installers
-        id: locate
         shell: pwsh
         run: |
-          Write-Host "Listing bundle folder..."
-          if (Test-Path "src-tauri\target\release\bundle") {
-            Get-ChildItem -Recurse "src-tauri\target\release\bundle" | Format-Table FullName, Length
+          Write-Host "Removing bun.lock (was generated on Linux)..."
+          if (Test-Path "bun.lock") { Remove-Item "bun.lock" -Force }
+          Write-Host "Running bun install..."
+          bun install
+          Write-Host "Verifying dependencies..."
+          if (Test-Path "node_modules\.bin\next.cmd") {
+            Write-Host "next CLI: OK"
           } else {
-            Write-Host "Bundle folder not found!"
+            Write-Host "next CLI: MISSING"
+            exit 1
+          }
+          if (Test-Path "node_modules\.bin\tauri.cmd") {
+            Write-Host "tauri CLI: OK"
+          } else {
+            Write-Host "tauri CLI: MISSING"
             exit 1
           }
 
+      - name: Verify Tauri config
+        shell: pwsh
+        run: |
+          Write-Host "Project structure:"
+          Get-ChildItem -Path . | Format-Table Name, Mode
+          Write-Host ""
+          Write-Host "src-tauri structure:"
+          if (Test-Path "src-tauri") {
+            Get-ChildItem -Path src-tauri -Recurse -File | Select-Object -First 20 | Format-Table FullName
+          } else {
+            Write-Host "src-tauri/ folder NOT FOUND!"
+            exit 1
+          }
+
+      - name: Build Tauri app
+        shell: pwsh
+        run: |
+          Write-Host "=== Building Tauri app ==="
+          Write-Host "TAURI_BUILD = $env:TAURI_BUILD"
+          bun run tauri:build
+        env:
+          TAURI_BUILD: "1"
+
+      - name: Locate built installers
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "=== Build output ==="
+          if (Test-Path "src-tauri\target\release\bundle") {
+            Write-Host "Bundle folder contents:"
+            Get-ChildItem -Recurse "src-tauri\target\release\bundle" | Format-Table FullName, Length
+          } else {
+            Write-Host "Bundle folder not found at src-tauri\target\release\bundle"
+            Write-Host ""
+            Write-Host "Checking what's in src-tauri\target\release:"
+            if (Test-Path "src-tauri\target\release") {
+              Get-ChildItem "src-tauri\target\release" | Format-Table Name, Length
+            }
+          }
+
       - name: Upload MSI installer
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: BeamMP-Host-MSI-Installer
@@ -68,6 +99,7 @@ jobs:
           retention-days: 30
 
       - name: Upload NSIS installer
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: BeamMP-Host-NSIS-Installer
@@ -76,9 +108,11 @@ jobs:
           retention-days: 30
 
       - name: Upload portable exe
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: BeamMP-Host-Portable-Exe
           path: src-tauri/target/release/beammp-host.exe
           if-no-files-found: warn
           retention-days: 30
+```

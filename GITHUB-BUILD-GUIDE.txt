@@ -1,0 +1,105 @@
+# Get Your BeamMP Host Installer — The Easy Way
+
+You don't need to install anything on your computer. GitHub will build the
+installer for you on a real Windows machine in the cloud, for free.
+
+## What you need
+
+- A free GitHub account (sign up at https://github.com/signup — takes 1 minute)
+- That's it. No tools, no admin rights, nothing to install.
+
+## Steps (5 minutes of clicking, then 15 minutes of waiting)
+
+### Step 1: Sign in to GitHub
+Go to https://github.com and sign in (or sign up if you don't have an account).
+
+### Step 2: Create a new repository
+1. Click the **+** icon in the top-right corner
+2. Select **New repository**
+3. In "Repository name" type: `beammp-host`
+4. Select **Public** (required for free Actions minutes)
+5. Check **"Add a README file"**
+6. Click **Create repository**
+
+### Step 3: Upload the project files
+1. In your new repo, click the **"Add file"** button near the top right
+2. Select **"Upload files"**
+3. **Drag the entire contents** of the unzipped `beammp-host-tauri` folder into
+   the upload area (drag the files and folders inside, not the parent folder
+   itself — you should see `.github`, `src`, `src-tauri`, `package.json`, etc.
+   get added)
+4. Note: GitHub's web upload has a 100-file limit per drag. If it complains,
+   upload in batches: first the top-level files, then `src/`, then `src-tauri/`,
+   then `.github/`. Each batch: click "Add file" → "Upload files" → drag →
+   commit.
+5. At the bottom, in "Commit changes", just click **"Commit changes"**
+
+### Step 4: Wait for the build to start
+The moment you commit, GitHub will start building your installer. To watch it:
+1. Click the **"Actions"** tab at the top of your repo page
+2. You'll see a workflow called "Build Windows Installer" running
+3. Click on it to see live progress (yellow dot = running, green check = done,
+   red X = failed)
+4. It takes about 10-15 minutes
+
+### Step 5: Download your MSI installer
+1. When the build finishes (green checkmark), click on the completed run
+2. Scroll down to the **"Artifacts"** section at the bottom
+3. You'll see three artifacts:
+   - `BeamMP-Host-MSI-Installer` — the MSI installer (recommended)
+   - `BeamMP-Host-NSIS-Installer` — alternative installer
+   - `BeamMP-Host-Portable-Exe` — just the .exe, no installer
+4. Click **`BeamMP-Host-MSI-Installer`** to download a zip
+5. Unzip it — inside is `BeamMP Host_0.1.0_x64_en-US.msi`
+6. **Double-click the MSI to install**, then launch "BeamMP Host" from your
+   Start menu
+
+## If the build fails
+
+Click on the failed run in the Actions tab, then click the "Build Tauri app"
+step that has a red X. Copy the error message and paste it back to me. I'll fix
+the workflow file and you can re-trigger the build by going to:
+**Actions tab → "Build Windows Installer" → "Run workflow"** button (top right).
+
+## If the upload is too tedious
+
+GitHub's web uploader is clunky for 100+ files. Easier alternatives:
+
+### Option A: Use GitHub Desktop (free app, 2-min install)
+1. Download from https://desktop.github.com/
+2. Sign in with your GitHub account
+3. Click **"Add" → "Clone repository"** → select your `beammp-host` repo
+4. Open the cloned folder in File Explorer
+5. Copy all the files from the unzipped `beammp-host-tauri` folder into it
+   (overwrite the README.md that's there)
+6. Back in GitHub Desktop: write any message in the "Summary" box, click
+   **"Commit to main"**, then click **"Push origin"**
+7. Done — the build starts immediately
+
+### Option B: Use git from the command line
+```powershell
+cd "C:\Users\Solymi\Documents\7. Beam server"
+git init
+git remote add origin https://github.com/YOUR-USERNAME/beammp-host.git
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git push -u origin main
+```
+
+## How this works
+
+GitHub provides free Windows virtual machines for open-source projects.
+The `.github/workflows/build.yml` file in this project tells GitHub to:
+1. Spin up a Windows VM with MSVC Build Tools, Rust, and Bun pre-installed
+2. Run `bun install` and `bun run tauri:build`
+3. Upload the resulting MSI/NSIS installers as downloadable artifacts
+
+You get all the benefits of a real Windows build without installing anything
+on your own PC. The artifacts stay available for 30 days.
+
+## Need help?
+
+If anything in this guide doesn't work, paste the error message back to me.
+The most common issue is the 100-file upload limit, which is solved by using
+GitHub Desktop (Option A above).

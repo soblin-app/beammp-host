@@ -1,0 +1,25 @@
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Next.js build outputs
+out/
+.next/
+
+# Logs
+*.log
+dev.log
+server.log
+
+# Environment
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,59 @@
+# Build BeamMP Host on Windows — Easy Mode
+
+You need to run **one command**. The script does everything else.
+
+## Step-by-step
+
+1. **Download** `beammp-host-tauri.zip` from the download folder and unzip it
+   somewhere on your PC, e.g. `C:\Users\Solymi\Documents\7. Beam server\`
+
+2. **Right-click** the Start button → **Windows PowerShell (Admin)** or
+   **Terminal (Admin)**
+
+3. **cd** into the project folder:
+   ```powershell
+   cd "C:\Users\Solymi\Documents\7. Beam server"
+   ```
+
+4. **Allow scripts to run** (one-time):
+   ```powershell
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   ```
+
+5. **Run the build script:**
+   ```powershell
+   .\build.ps1
+   ```
+
+6. **Wait ~20 minutes.** The script will:
+   - Install Microsoft Visual C++ Build Tools (~6GB download, 10-15 min)
+   - Verify Rust, Bun, and link.exe are all available
+   - Run `bun install` and `bun run tauri:build`
+   - Open the folder containing your MSI installer when done
+
+7. **Double-click the MSI file** to install BeamMP Host, then launch it from
+   your Start menu.
+
+## If something goes wrong
+
+- **"link.exe still not found after install"** — restart your computer and run
+  `.\build.ps1` again. The PATH needs a reboot to fully refresh.
+
+- **UAC prompt denied** — you must approve the admin prompt for MSVC Build Tools
+  to install. Re-run as Administrator.
+
+- **Build fails on a Rust crate** — copy the error message and paste it back to
+  me. Rust compilation errors are usually version-specific and fixable.
+
+- **`Set-ExecutionPolicy` error** — make sure you ran step 4 first.
+
+## What you need before starting
+
+- Windows 10 or 11
+- ~10 GB free disk space (6 GB for MSVC, 1 GB for Rust crates, rest for build)
+- Internet connection
+- Admin rights on your PC
+- A BeamMP AuthKey (free, from https://keymaster.beammp.com/ — sign in with Discord)
+- A playit.gg account (free, from https://playit.gg/)
+
+You don't need these accounts to *build* the app — only to *use* it after it's installed.

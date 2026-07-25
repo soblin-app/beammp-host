@@ -1,0 +1,84 @@
+name: Build Windows Installer
+
+# This workflow builds the BeamMP Host MSI installer on a real Windows machine
+# in GitHub's cloud (free for public repos). You don't need any tools installed
+# locally - GitHub provides the Windows runner with MSVC, Rust, and everything
+# else pre-installed.
+#
+# After the build finishes (about 10-15 minutes), you can download the MSI
+# installer from the workflow run page.
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # allows manual trigger from the Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile=false
+
+      - name: Build Tauri app
+        run: bun run tauri:build
+        env:
+          # The windows-latest runner has MSVC Build Tools pre-installed,
+          # so link.exe will be available without any extra setup.
+          TAURI_BUILD: "1"
+
+      - name: Locate built installers
+        id: locate
+        shell: pwsh
+        run: |
+          Write-Host "Listing bundle folder..."
+          if (Test-Path "src-tauri\target\release\bundle") {
+            Get-ChildItem -Recurse "src-tauri\target\release\bundle" | Format-Table FullName, Length
+          } else {
+            Write-Host "Bundle folder not found!"
+            exit 1
+          }
+
+      - name: Upload MSI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: BeamMP-Host-MSI-Installer
+          path: src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload NSIS installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: BeamMP-Host-NSIS-Installer
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload portable exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: BeamMP-Host-Portable-Exe
+          path: src-tauri/target/release/beammp-host.exe
+          if-no-files-found: warn
+          retention-days: 30
